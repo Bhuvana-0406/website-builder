@@ -43,6 +43,12 @@ const Navbar = () => {
       getCredits()
     }
   },[session?.user])
+  useEffect(() => {
+  fetch(`${import.meta.env.VITE_API_URL}/api/auth/get-session`)
+    .then(res => res.json())
+    .then(data => console.log(data))
+    .catch(err => console.error(err));
+}, []);
 
   return (
     <>
