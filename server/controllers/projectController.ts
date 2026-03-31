@@ -151,6 +151,7 @@ Return ONLY the updated full HTML page.`
             where: {id: userId},
             data: {credits: {increment: 5}}
         })
+        res.status(500).json({ message: "Unable to generate the code, please try again" });
         return;
         }
         const version = await prisma.version.create({
