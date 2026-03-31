@@ -8,12 +8,10 @@ import projectRouter from "./routes/projectRoutes.js";
 import { stripeWebhook } from "./controllers/stripeWebhook.js";
 
 const app = express();
-const corsOptions = {
-    origin: process.env.TRUSTED_ORIGINS?.split(',') || [],
-    credentials:true,
-}
-// Middleware
-app.use(cors(corsOptions))
+app.use(cors({
+  origin: "https://website-builder-liard-mu.vercel.app",
+  credentials: true
+}));
 app.post(`/api/stripe`,express.raw({type: 'application/json'}),stripeWebhook);
 app.use("/api/auth", toNodeHandler(auth));
 app.use(express.json({limit: '50mb'}));
