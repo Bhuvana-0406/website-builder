@@ -67,8 +67,12 @@ export const createUserProject = async (req: Request, res: Response) => {
       data: { credits: { decrement: 5 } },
     });
 
-    // enhance user prompt
-    const promptEnhanceResponse = await openai.chat.completions.create({
+    res.json({ projectId: project.id });
+
+    // enhance user prompt in background
+    (async () => {
+      try {
+        const promptEnhanceResponse = await openai.chat.completions.create({
       model: "stepfun/step-3.5-flash:free",
       messages: [
         {
@@ -161,7 +165,6 @@ Return ONLY the enhanced prompt, nothing else. Make it detailed but concise (2-3
         where: { id: userId },
         data: { credits: { increment: 5 } },
       });
-      res.status(500).json({ message: "Unable to generate the code, please try again" });
       return;
     }
     // create version for the project
@@ -196,12 +199,24 @@ Return ONLY the enhanced prompt, nothing else. Make it detailed but concise (2-3
       },
     });
 
-    res.json({ projectId: project.id });
+      } catch (backgroundError: any) {
+        console.error("Background generation error:", backgroundError);
+        // Refund credits on failure
+        await prisma.user.update({
+          where: { id: userId },
+          data: { credits: { increment: 5 } },
+        });
+        await prisma.conversation.create({
+          data: {
+            role: "assistant",
+            content: "An error occurred while generating your website. Please try again.",
+            projectId: project.id,
+          },
+        });
+      }
+    })();
+
   } catch (error: any) {
-    await prisma.user.update({
-      where: { id: userId },
-      data: { credits: { increment: 5 } },
-    });
     console.log(error);
     res.status(500).json({ message: error.message });
   }
